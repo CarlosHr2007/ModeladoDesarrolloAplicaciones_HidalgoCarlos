@@ -1,0 +1,60 @@
+@startuml
+left to right direction
+actor "Cliente" as C
+actor "Encargado Almacén" as A
+actor "Pasarela de Pago" as P
+
+rectangle "Sistema de Ventas en Línea - Bodega" {
+  usecase "CUS-01: Realizar Pedido" as UC1
+  usecase "Validar Stock" as UC_Stock
+  usecase "Notificar Falta de Stock" as UC_NoStock
+  usecase "CUS-02: Procesar Pago" as UC2
+  usecase "Rechazar Pago" as UC_Rechazo
+  usecase "CUS-03: Gestionar Envío" as UC3
+}
+
+C --> UC1
+C --> UC2
+UC1 ..> UC_Stock : <<include>>
+UC_NoStock ..> UC1 : <<extend>>
+UC2 --> P
+UC_Rechazo ..> UC2 : <<extend>>
+A --> UC3
+@enduml
+
+
+
+@startuml
+|Cliente|
+start
+:Seleccionar productos;
+if (¿Continuar compra?) then (No)
+  stop
+else (Sí)
+  :Confirmar pedido (CUS-01);
+endif
+
+|Sistema|
+:Procesar pedido y verificar stock;
+if (¿Hay stock suficiente?) then (No)
+  :Notificar falta de stock;
+  stop
+else (Sí)
+  :Enviar información de pedido;
+endif
+
+|Pasarela de Pago|
+:Procesar pago (CUS-02);
+if (¿Pago aprobado?) then (No)
+  :Rechazar pago;
+  stop
+else (Sí)
+  :Emitir resultado aprobado;
+endif
+
+|Almacén|
+:Preparar envío (CUS-03);
+:Empacar productos;
+:Despachar pedido;
+stop
+@enduml
