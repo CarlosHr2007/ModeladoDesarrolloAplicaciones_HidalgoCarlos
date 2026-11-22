@@ -1,0 +1,91 @@
+@startuml
+left to right direction
+
+actor "Encargado de Tienda" as ET
+actor "Cliente" as CL
+actor "Sistema de Pagos" as SP
+
+rectangle "Sistema de Ventas y Gestión de Inventario" {
+  usecase "Registrar venta o pedido" as UC_Venta
+  usecase "Validar stock disponible" as UC_Stock
+  usecase "Actualizar inventario" as UC_Inv
+  usecase "Generar comprobante" as UC_Comp
+}
+
+ET --> UC_Venta
+CL --> UC_Venta
+CL --> UC_Comp
+SP --> UC_Comp
+
+UC_Venta ..> UC_Stock : <<include>>
+UC_Venta ..> UC_Inv : <<include>>
+
+note right of UC_Venta
+  El cliente o encargado registra
+  la venta/pedido tras validar
+  el stock y actualizar el inventario.
+end note
+@enduml
+
+
+@startuml
+|Cliente / Encargado|
+start
+:Seleccionar productos y cantidades;
+
+|Sistema|
+:Validar stock disponible;
+if (¿Hay stock suficiente?) then (No)
+  :Informar falta de stock;
+  stop
+else (Sí)
+  :Solicitar confirmación de pago;
+endif
+
+|Sistema de Pagos|
+if (¿Pago aprobado?) then (No)
+  :Rechazar operación;
+  stop
+else (Sí)
+  :Confirmar pago;
+endif
+
+|Sistema|
+:Actualizar inventario;
+:Generar comprobante;
+stop
+@enduml
+
+
+
+@startuml
+actor Cliente
+participant ":Pedido" as P
+participant ":DetallePedido" as DP
+participant ":Producto" as PR
+participant ":Pago" as PG
+
+Cliente -> P : crearPedido()
+activate P
+
+Cliente -> P : agregarProducto(producto, cantidad)
+P -> PR : validarStock(cantidad)
+activate PR
+PR --> P : stockDisponible (true/false)
+deactivate PR
+
+alt Stock disponible
+  P -> DP ** : crearDetalle(producto, cantidad)
+  P -> P : calcularTotal()
+  Cliente -> PG : procesarPago(total)
+  activate PG
+  PG --> P : pagoAprobado (true)
+  deactivate PG
+  P -> PR : descontarStock(cantidad)
+  P --> Cliente : confirmarPedido()
+else Stock insuficiente
+  P --> Cliente : mostrarAlertaSinStock()
+end
+
+deactivate P
+@enduml
